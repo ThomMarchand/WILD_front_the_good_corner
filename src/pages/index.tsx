@@ -1,9 +1,9 @@
-import { Layout } from "@/component/Layout";
-import { RecentAds } from "@/component/RecentAds";
+import RecentAds from "@/components/RecentAds";
+import Layout from "@/components/Layout";
 
 export default function Home() {
   return (
-    <Layout pageTitle="Accueil">
+    <Layout pageTitle="Acceuil">
       <RecentAds />
     </Layout>
   );
