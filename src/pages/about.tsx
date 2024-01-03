@@ -1,17 +1,16 @@
-import { Layout } from "@/component/Layout";
+import Layout from "@/components/Layout";
 
-const about = () => {
+export default function About() {
   return (
-    <Layout pageTitle="A propos">
-      <h1>surprise motherfucker</h1>
+    <Layout pageTitle="A Propos">
+      <h1>About us</h1>
+
       <p>
-        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Minima esse
-        accusamus deleniti recusandae, earum consectetur nostrum iure fuga.
-        Esse, nemo quod. Enim corrupti impedit earum ipsam ipsa voluptatibus
-        suscipit eum!
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Minus porro
+        dolorem, repellendus non provident consequatur. Numquam, corporis
+        delectus? Temporibus, dolore! Vitae repellendus tenetur quibusdam beatae
+        aliquam soluta eveniet voluptate provident!
       </p>
     </Layout>
   );
-};
-
-export default about;
+}

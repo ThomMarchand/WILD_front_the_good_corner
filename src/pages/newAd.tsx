@@ -1,104 +1,187 @@
-import { useEffect, useState } from "react";
+import Layout from "@/components/Layout";
+import { Category, Tag } from "@/types";
+import { FormEvent, useEffect, useState } from "react";
 import axios from "axios";
-
-import { Layout } from "@/component/Layout";
-import { HomeBtn } from "@/component/HomeBtn";
-
-export type category = {
-  id: number;
-  type: string;
-};
+import { useRouter } from "next/router";
+import Select from "react-select";
 
 export default function NewAd() {
-  const [categories, setCategories] = useState<category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     axios
-      .get<category[]>("http://localhost:4000/categories")
-      .then(({ data }) => setCategories(data));
+      .get<Category[]>("http://localhost:4000/categories")
+      .then((res) => setCategories(res.data))
+      .catch(console.error);
   }, []);
+
+  const [tags, setTags] = useState<Tag[]>([]);
+
+  useEffect(() => {
+    axios
+      .get<Tag[]>("http://localhost:4000/tags")
+      .then((res) => setTags(res.data))
+      .catch(console.error);
+  }, []);
+
+  const tagOptions = tags;
+
+  const router = useRouter();
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const formJSON: any = Object.fromEntries(formData.entries());
+    formJSON.price = parseFloat(formJSON.price);
+    formJSON.tags = selectedTags.map((t) => ({ id: t.id }));
+
+    axios
+      .post("http://localhost:4000/ads", formJSON)
+      .then((res) => {
+        router.push(`/ads/${res.data.id}`);
+      })
+      .catch(console.error);
+  };
+
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+
   return (
-    <Layout pageTitle="Céer une annonce">
-      <form
-        className="ad-form"
-        onSubmit={(e) => {
-          e.preventDefault();
+    <Layout pageTitle="Creation d'une annonce">
+      <h1 className="pt-6 pb-6 text-2xl">Creer une annonce</h1>
 
-          const form = e.target as HTMLFormElement;
-          const formData = new FormData(form);
-          const formJSON = Object.fromEntries(formData.entries());
+      <form onSubmit={handleSubmit} className="pb-12">
+        <div className="flex flex-wrap gap-6 mb-3">
+          <div className="form-control w-full">
+            <label className="label" htmlFor="title">
+              <span className="label-text">Titre</span>
+            </label>
+            <input
+              required
+              type="text"
+              name="title"
+              id="title"
+              placeholder="Zelda : Ocarina of time"
+              className="input input-bordered w-full"
+            />
+          </div>
+        </div>
 
-          (formJSON as any).price = parseFloat((formJSON as any).price);
-          (formJSON as any).category = parseInt((formJSON as any).category);
+        <div className="flex flex-wrap gap-6 mb-3">
+          <div className="form-control w-full max-w-xs">
+            <label className="label" htmlFor="location">
+              <span className="label-text">Localisation</span>
+            </label>
+            <input
+              type="text"
+              name="location"
+              id="location"
+              required
+              placeholder="Paris"
+              className="input input-bordered w-full max-w-xs"
+            />
+          </div>
 
-          axios.post("http://localhost:4000/ad", formJSON);
-          form.reset();
-        }}
-      >
-        <label>
-          Titre de l&apos;annonce :
-          <input className="text-field" name="title" type="text" />
-        </label>
+          <div className="form-control w-full max-w-xs">
+            <label className="label" htmlFor="owner">
+              <span className="label-text">Auteur</span>
+            </label>
+            <input
+              type="text"
+              name="owner"
+              id="owner"
+              required
+              placeholder="Link"
+              className="input input-bordered w-full max-w-xs"
+            />
+          </div>
+        </div>
 
-        <label htmlFor="picture">
-          Image de l&apos;annonce
-          <input
-            className="text-field"
-            type="url"
-            name="picture"
-            id="picture"
-          />
-        </label>
+        <div className="flex flex-wrap gap-6 mb-3">
+          <div className="form-control w-full max-w-xs">
+            <label className="label" htmlFor="price">
+              <span className="label-text">Prix</span>
+            </label>
+            <input
+              required
+              type="number"
+              name="price"
+              id="price"
+              min={0}
+              placeholder="30"
+              className="input input-bordered w-full max-w-xs"
+            />
+          </div>
+          <div className="form-control w-full max-w-xs">
+            <label className="label" htmlFor="picture">
+              <span className="label-text">Image</span>
+            </label>
+            <input
+              type="text"
+              name="picture"
+              id="picture"
+              required
+              placeholder="https://imageshack.com/zoot.png"
+              className="input input-bordered w-full max-w-xs"
+            />
+          </div>
+        </div>
 
-        <label htmlFor="owner">
-          Auteur
-          <input className="text-field" type="text" name="owner" id="owner" />
-        </label>
+        <div className="flex flex-wrap gap-6 mb-3 mt-6">
+          <div className="form-control w-full max-w-xs">
+            <label className="label" htmlFor="category">
+              <span className="label-text">Catégorie</span>
+            </label>
+            <select
+              className="select select-bordered"
+              id="category"
+              name="category"
+              required
+            >
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <label htmlFor="location">
-          Localisation
-          <input
-            className="text-field"
-            type="text"
-            name="location"
-            id="location"
-          />
-        </label>
+          <div className="form-control w-full max-w-xs">
+            <label htmlFor="tags" className="label">
+              <span className="label-text">Tags</span>
+            </label>
+            <Select
+              options={tagOptions}
+              getOptionValue={(o: any) => o.value || (o.id.toString() as any)}
+              getOptionLabel={(o: any) => o.label || o.name}
+              isMulti
+              name="tags"
+              id="tags"
+              value={selectedTags}
+              closeMenuOnSelect={false}
+              onChange={(tags) => {
+                setSelectedTags(tags as any);
+              }}
+            />
+          </div>
+        </div>
 
-        <label htmlFor="price">
-          Prix
-          <input
-            className="text-field"
-            type="number"
-            name="price"
-            id="price"
-            step={0.01}
-          />
-        </label>
-
-        <label htmlFor="description">
-          Description
+        <div className="form-control">
+          <label className="label" htmlFor="description">
+            <span className="label-text">Description</span>
+          </label>
           <textarea
-            className="text-field"
+            rows={5}
+            className="textarea textarea-bordered"
+            placeholder="The Legend of Zelda: Ocarina of Time est un jeu vidéo d'action-aventure développé par Nintendo EAD et édité par Nintendo sur Nintendo 64. Ocarina of Time raconte l'histoire de Link, un jeune garçon vivant dans un village perdu dans la forêt, qui parcourt le royaume d'Hyrule pour empêcher Ganondorf d'obtenir la Triforce, une relique sacrée partagée en trois : le courage (Link), la sagesse (Zelda) et la force (Ganondorf)."
             name="description"
             id="description"
-            style={{ resize: "none" }}
-          />
-        </label>
+            required
+          ></textarea>
+        </div>
 
-        <label htmlFor="category">
-          Prix
-          <select name="category" id="category">
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.type}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <button className="button">Envoyer</button>
-        <HomeBtn />
+        <button className="btn btn-primary text-white mt-12 w-full">
+          Envoyer
+        </button>
       </form>
     </Layout>
   );
