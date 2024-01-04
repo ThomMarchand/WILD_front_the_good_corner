@@ -1,25 +1,25 @@
 import Layout from "@/components/Layout";
-import { AdDetails as AdDetailsType } from "@/types";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import Link from "next/link";
 import axios from "axios";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { MapPinIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
+
+import { useAdDetailsQuery } from "@/graphql/generated/schema";
 
 export default function AdDetails() {
   const router = useRouter();
   const { id } = router.query;
-  const [ad, setAd] = useState<AdDetailsType>();
 
-  useEffect(() => {
-    if (id)
-      axios
-        .get<AdDetailsType>(`http://localhost:4000/ads/${id}`)
-        .then((res) => setAd(res.data))
-        .catch(console.error);
-  }, [id]);
+  const { data, error } = useAdDetailsQuery({
+    variables: { adId: parseInt(id as string) },
+    skip: typeof id === "undefined",
+  });
+
+  const ad = data?.getAdById;
+
+  console.log({ error });
 
   return (
     <Layout pageTitle={ad?.title ? ad.title + " - TGC" : "The Good Corner"}>
