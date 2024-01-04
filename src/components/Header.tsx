@@ -17,7 +17,6 @@ export default function Header() {
       .catch(console.error);
   }, []);
 
-  console.log(router.query.title);
   const [search, setSearch] = useState(router.query.title || "");
 
   useEffect(() => {
@@ -25,7 +24,6 @@ export default function Header() {
   }, [router.isReady]);
 
   useEffect(() => {
-    console.log("effect", search, router.pathname, router.query.title);
     if ((router.pathname === "/search" || search.length) && router.isReady)
       router.push(
         `/search?${qs.stringify({
