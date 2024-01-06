@@ -11,5 +11,8 @@ query AdDetails($adId: Int!) {
       name
       id
     }
+    category {
+      id
+    }
   }
 }

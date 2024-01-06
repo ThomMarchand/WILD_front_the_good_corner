@@ -1,0 +1,6 @@
+query Categories($name: String) {
+  categories(name: $name) {
+    id
+    name
+  }
+}

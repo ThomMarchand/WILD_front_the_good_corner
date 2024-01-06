@@ -4,41 +4,38 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import qs from "query-string";
+import { useCategoriesQuery } from "@/graphql/generated/schema";
 
 export default function Header() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [autoCompleteOptions, setAutoCompleteOptions] = useState<Ad[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:4000/categories")
-      .then((res) => setCategories(res.data))
-      .catch(console.error);
-  }, []);
+  const { data } = useCategoriesQuery();
 
+  const categories = data?.categories || [];
+
+  const [autoCompleteOptions, setAutoCompleteOptions] = useState<Ad[]>([]);
   const [search, setSearch] = useState(router.query.title || "");
 
-  useEffect(() => {
-    if (router.isReady) setSearch(router.query.title || "");
-  }, [router.isReady]);
+  // useEffect(() => {
+  //   if (router.isReady) setSearch(router.query.title || "");
+  // }, [router.isReady]);
 
-  useEffect(() => {
-    if ((router.pathname === "/search" || search.length) && router.isReady)
-      router.push(
-        `/search?${qs.stringify({
-          ...searchParams,
-          title: search || router.query.title,
-        })}`
-      );
+  // useEffect(() => {
+  //   if ((router.pathname === "/search" || search.length) && router.isReady)
+  //     router.push(
+  //       `/search?${qs.stringify({
+  //         ...searchParams,
+  //         title: search || router.query.title,
+  //       })}`
+  //     );
 
-    if (search.length)
-      axios
-        .get<Ad[]>(`http://localhost:4000/autocompleteAdTitle?title=${search}`)
-        .then((res) => setAutoCompleteOptions(res.data))
-        .catch(console.error);
-    else setAutoCompleteOptions([]);
-  }, [search, router.isReady]);
+  //   if (search.length)
+  //     axios
+  //       .get<Ad[]>(`http://localhost:4000/autocompleteAdTitle?title=${search}`)
+  //       .then((res) => setAutoCompleteOptions(res.data))
+  //       .catch(console.error);
+  //   else setAutoCompleteOptions([]);
+  // }, [search, router.isReady]);
 
   const searchParams = qs.parse(window.location.search) as any;
 

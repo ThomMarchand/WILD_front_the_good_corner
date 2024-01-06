@@ -23,3 +23,7 @@ export type AdDetails = Ad & {
   category: Category;
   tags: Tag[];
 };
+
+export type __Tag = Tag & {
+  __typename: string;
+};

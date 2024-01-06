@@ -1,53 +1,56 @@
 import Layout from "@/components/Layout";
-import { AdDetails, Category, Tag } from "@/types";
+import { __Tag } from "@/types";
 import { useRouter } from "next/router";
-import { FormEvent, useEffect, useState } from "react";
-import axios from "axios";
+import { FormEvent, useState } from "react";
 import Select from "react-select";
+import {
+  useAdDetailsQuery,
+  useCategoriesQuery,
+  useTagsQuery,
+  useUpdateAdMutation,
+} from "@/graphql/generated/schema";
 
 export default function EditAd() {
   const router = useRouter();
   const { adId } = router.query;
-  const [ad, setAd] = useState<AdDetails>();
-  const [categories, setCategories] = useState<Category[]>([]);
 
-  useEffect(() => {
-    axios
-      .get<AdDetails>(`http://localhost:4000/ads/${adId}`)
-      .then((res) => setAd(res.data))
-      .catch(console.error);
-  }, [adId]);
+  const { data, refetch } = useAdDetailsQuery({
+    variables: { adId: parseInt(adId as string) },
+    skip: typeof adId === "undefined",
+  });
+  const ad = data?.getAdById;
 
-  useEffect(() => {
-    axios
-      .get<Category[]>("http://localhost:4000/categories")
-      .then((res) => setCategories(res.data))
-      .catch(console.error);
-  }, []);
+  const { data: categoriesData } = useCategoriesQuery();
+  const categories = categoriesData?.categories || [];
+
+  const { data: tagsData } = useTagsQuery();
+  const tags = tagsData?.getTagByName || [];
+
+  const [tagsOption, setTagsOption] = useState<__Tag[]>();
+
+  const [updatedAd] = useUpdateAdMutation();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const id = (
+      typeof adId === "string" ? parseInt(adId, 10) : undefined
+    ) as number;
     const formData = new FormData(e.target as HTMLFormElement);
     const formJSON: any = Object.fromEntries(formData.entries());
+    formJSON.category = parseInt(formJSON.category, 10);
     formJSON.price = parseFloat(formJSON.price);
-    formJSON.tags = ad?.tags.map((t) => ({ id: t.id }));
+    formJSON.tags = tagsOption?.map((t) => ({ id: t.id }));
 
-    axios
-      .patch(`http://localhost:4000/ads/${ad?.id}`, formJSON)
-      .then((res) => {
-        router.push(`/ads/${res.data.id}`);
-      })
-      .catch(console.error);
+    console.log(formJSON);
+    updatedAd({
+      variables: {
+        adId: id,
+        data: formJSON,
+      },
+    }).then((res) => {
+      refetch(), router.push(`/ads/${res.data?.updateAd.id}`);
+    });
   };
-
-  const [tags, setTags] = useState<Tag[]>([]);
-
-  useEffect(() => {
-    axios
-      .get<Tag[]>("http://localhost:4000/tags")
-      .then((res) => setTags(res.data))
-      .catch(console.error);
-  }, []);
 
   return (
     <Layout pageTitle={ad?.title ? ad.title + " - TGC" : "The Good Corner"}>
@@ -167,11 +170,8 @@ export default function EditAd() {
                 isMulti
                 name="tags"
                 id="tags"
-                value={ad.tags}
                 closeMenuOnSelect={false}
-                onChange={(tags) => {
-                  setAd({ ...ad, tags: tags as any });
-                }}
+                onChange={(tags) => setTagsOption(tags as any)}
               />
             </div>
           </div>
