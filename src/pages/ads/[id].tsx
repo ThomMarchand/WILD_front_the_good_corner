@@ -6,20 +6,32 @@ import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 
-import { useAdDetailsQuery } from "@/graphql/generated/schema";
+import {
+  useAdDetailsQuery,
+  useDeleteAdMutationMutation,
+} from "@/graphql/generated/schema";
 
 export default function AdDetails() {
   const router = useRouter();
   const { id } = router.query;
 
-  const { data, error } = useAdDetailsQuery({
+  const { data } = useAdDetailsQuery({
     variables: { adId: parseInt(id as string) },
     skip: typeof id === "undefined",
   });
+  const [deleteTag] = useDeleteAdMutationMutation();
 
   const ad = data?.getAdById;
 
-  console.log({ error });
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteTag({ variables: { adId: id } }).then(() => {
+        router.push("/");
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <Layout pageTitle={ad?.title ? ad.title + " - TGC" : "The Good Corner"}>
@@ -78,12 +90,7 @@ export default function AdDetails() {
                         "Etes-vous certain.e de vouloir supprimer cette annonce ?"
                       )
                     )
-                      axios
-                        .delete(`http://localhost:4000/ads/${ad.id}`)
-                        .then(() => {
-                          router.push("/");
-                        })
-                        .catch(console.error);
+                      handleDelete(ad.id);
                   }}
                 >
                   <TrashIcon width={24} height={24} className="mr-2" />

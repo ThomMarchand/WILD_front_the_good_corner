@@ -2,8 +2,9 @@ import AdCard from "./AdCard";
 import { useRecentAdsQuery } from "@/graphql/generated/schema";
 
 export default function RecentAds() {
-  const { data } = useRecentAdsQuery();
+  const { data, refetch } = useRecentAdsQuery();
   const ads = data?.ads || [];
+  refetch();
 
   return (
     <div className="pt-6">
