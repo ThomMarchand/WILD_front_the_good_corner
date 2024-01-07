@@ -1,48 +1,74 @@
+import {
+  TagsDocument,
+  TagsQuery,
+  useCreateTagMutation,
+  useDeleteTagMutation,
+  useTagsQuery,
+} from "@/graphql/generated/schema";
+import { client } from "@/graphql/client";
+
 import AdminTagRow from "@/components/admin/AdminTagRow";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Tag } from "@/types";
-import axios from "axios";
-import { useEffect, useState } from "react";
 
 export default function AdminTags() {
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [createTag] = useCreateTagMutation();
+  const [deleteTag] = useDeleteTagMutation();
 
-  useEffect(() => {
-    axios
-      .get<Tag[]>("http://localhost:4000/tags")
-      .then((res) => setTags(res.data))
-      .catch(console.error);
-  }, []);
+  const { data } = useTagsQuery();
+  const tags = data?.getTagByName || [];
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const data = new FormData(form);
+    const json = Object.fromEntries(data.entries());
+
+    try {
+      const { data } = await createTag({
+        variables: {
+          data: {
+            name: json.name as string,
+          },
+        },
+      });
+
+      if (data?.createTag) {
+        client.writeQuery<TagsQuery>({
+          query: TagsDocument,
+          data: {
+            getTagByName: [data?.createTag, ...tags],
+          },
+        });
+      }
+
+      form.reset();
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   const handleDeleteTag = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:4000/tags/${id}`);
-      setTags((tagList) => tagList?.filter((t) => t.id !== id));
+      await deleteTag({
+        variables: {
+          tadId: id,
+        },
+      });
+
+      client.writeQuery<TagsQuery>({
+        query: TagsDocument,
+        data: {
+          getTagByName: tags.filter((t) => t.id !== id),
+        },
+      });
     } catch (e) {
-      console.error(e);
+      console.log(e);
     }
   };
 
   return (
     <AdminLayout title="gestion des tags - TGC">
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const form = e.target as HTMLFormElement;
-          const data = new FormData(form);
-          const json = Object.fromEntries(data.entries());
-
-          try {
-            const newTag = (
-              await axios.post("http://localhost:4000/tags", json)
-            ).data;
-            form.reset();
-            setTags((oldList) => [newTag, ...oldList]);
-          } catch (err) {
-            console.error(err);
-          }
-        }}
-      >
+      <form onSubmit={handleSubmit}>
         <label htmlFor="name">
           Nouveau Tag :{" "}
           <input

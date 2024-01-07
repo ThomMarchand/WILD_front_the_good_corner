@@ -1,0 +1,5 @@
+mutation UpdateTag($data: TagCategory!, $tagId: Float!) {
+  updateTag(data: $data, tagId: $tagId) {
+    name
+  }
+}

@@ -1,47 +1,29 @@
-import { Ad, Category } from "@/types";
-import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import qs from "query-string";
-import { useCategoriesQuery } from "@/graphql/generated/schema";
+import {
+  useAutocompletAdTitleQuery,
+  useCategoriesQuery,
+} from "@/graphql/generated/schema";
 
 export default function Header() {
   const router = useRouter();
-
-  const { data } = useCategoriesQuery();
-
-  const categories = data?.categories || [];
-
-  const [autoCompleteOptions, setAutoCompleteOptions] = useState<Ad[]>([]);
-  const [search, setSearch] = useState(router.query.title || "");
-
-  // useEffect(() => {
-  //   if (router.isReady) setSearch(router.query.title || "");
-  // }, [router.isReady]);
-
-  // useEffect(() => {
-  //   if ((router.pathname === "/search" || search.length) && router.isReady)
-  //     router.push(
-  //       `/search?${qs.stringify({
-  //         ...searchParams,
-  //         title: search || router.query.title,
-  //       })}`
-  //     );
-
-  //   if (search.length)
-  //     axios
-  //       .get<Ad[]>(`http://localhost:4000/autocompleteAdTitle?title=${search}`)
-  //       .then((res) => setAutoCompleteOptions(res.data))
-  //       .catch(console.error);
-  //   else setAutoCompleteOptions([]);
-  // }, [search, router.isReady]);
-
   const searchParams = qs.parse(window.location.search) as any;
 
-  const [showAutoComplete, setShowAutoComplete] = useState(false);
+  const { data } = useCategoriesQuery();
+  const categories = data?.categories || [];
 
+  const [search, setSearch] = useState(router.query.title || "");
+  const [showAutoComplete, setShowAutoComplete] = useState(false);
   const [selectedAutoCompleteIndex, setSelectedAutoCompleteIndex] = useState(0);
+
+  const { data: autocompleteData } = useAutocompletAdTitleQuery({
+    variables: {
+      title: search as string,
+    },
+  });
+  const autoCompleteOptions = autocompleteData?.ads || [];
 
   return (
     <header className="header">
@@ -68,7 +50,10 @@ export default function Header() {
                   setSelectedAutoCompleteIndex(0);
                   setSearch(e.target.value);
                 }}
-                onFocus={() => setShowAutoComplete(true)}
+                onFocus={(e) => {
+                  e.stopPropagation();
+                  setShowAutoComplete(true);
+                }}
                 onBlur={() =>
                   setTimeout(() => {
                     setShowAutoComplete(false);
@@ -97,7 +82,7 @@ export default function Header() {
                 style={{
                   visibility:
                     showAutoComplete &&
-                    autoCompleteOptions.filter((o) => o.title !== search)
+                    autoCompleteOptions?.filter((o) => o.title !== search)
                       .length > 0
                       ? "initial"
                       : "hidden",
@@ -127,8 +112,6 @@ export default function Header() {
               type="button"
               className="button button-primary ml-1"
               onClick={() => {
-                console.log("search");
-
                 router.push(
                   `/search?${qs.stringify({
                     ...searchParams,

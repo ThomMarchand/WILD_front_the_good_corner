@@ -1,11 +1,11 @@
 import { Tag } from "@/types";
 import { useState } from "react";
+import { useUpdateTagMutation } from "@/graphql/generated/schema";
 
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { XCircleIcon } from "@heroicons/react/24/outline";
-import axios from "axios";
 
 interface AdminTagRowProps {
   tag: Tag;
@@ -15,15 +15,20 @@ export default function AdminTagRow({
   tag: { id, name },
   handleDeleteTag,
 }: AdminTagRowProps) {
+  const [updateTag] = useUpdateTagMutation();
   const [isEditing, setIsEditing] = useState(false);
-
   const [displayedName, setDisplayedName] = useState(name);
 
   const handleSave = async () => {
     try {
       if (displayedName) {
-        await axios.patch(`http://localhost:4000/tags/${id}`, {
-          name: displayedName,
+        await updateTag({
+          variables: {
+            data: {
+              name: displayedName,
+            },
+            tagId: id,
+          },
         });
         setIsEditing(false);
       }

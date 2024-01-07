@@ -19,9 +19,9 @@ export default function AdDetails() {
     variables: { adId: parseInt(id as string) },
     skip: typeof id === "undefined",
   });
-  const [deleteTag] = useDeleteAdMutationMutation();
-
   const ad = data?.getAdById;
+
+  const [deleteTag] = useDeleteAdMutationMutation();
 
   const handleDelete = async (id: number) => {
     try {

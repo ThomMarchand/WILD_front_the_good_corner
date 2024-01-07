@@ -1,0 +1,6 @@
+query AutocompletAdTitle($title: String) {
+  ads(title: $title) {
+    id
+    title
+  }
+}
