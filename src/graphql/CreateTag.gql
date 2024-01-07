@@ -1,0 +1,6 @@
+mutation CreateTag($data: NewTagCategory!) {
+  createTag(data: $data) {
+    id
+    name
+  }
+}

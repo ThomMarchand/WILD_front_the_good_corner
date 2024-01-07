@@ -1,48 +1,72 @@
+import { client } from "@/graphql/client";
+import {
+  CategoriesQuery,
+  useCategoriesQuery,
+  useCreateCategoryMutation,
+  useDeleteCategoryMutation,
+} from "@/graphql/generated/schema";
+
+import { CategoriesDocument } from "../../graphql/generated/schema";
 import AdminCategoryRow from "@/components/admin/AdminCategoryRow";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Category } from "@/types";
-import axios from "axios";
-import { useEffect, useState } from "react";
 
 export default function AdminCategories() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [deleteCategory] = useDeleteCategoryMutation();
+  const [createCategory] = useCreateCategoryMutation();
 
-  useEffect(() => {
-    axios
-      .get<Category[]>("http://localhost:4000/categories")
-      .then((res) => setCategories(res.data))
-      .catch(console.error);
-  }, []);
+  const { data } = useCategoriesQuery();
+  const categories = data?.categories || [];
 
   const handleDeleteCategory = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:4000/categories/${id}`);
-      setCategories((catList) => catList?.filter((c) => c.id !== id));
+      await deleteCategory({
+        variables: {
+          categoryId: id,
+        },
+      });
+
+      client.writeQuery<CategoriesQuery>({
+        query: CategoriesDocument,
+        data: {
+          categories: categories.filter((c) => c.id !== id),
+        },
+      });
     } catch (e) {
-      console.error(e);
+      console.log(e);
+    }
+  };
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const data = new FormData(form);
+    const json = Object.fromEntries(data.entries());
+
+    try {
+      const { data } = await createCategory({
+        variables: {
+          data: json as any,
+        },
+      });
+
+      if (data?.createCategory) {
+        client.writeQuery<CategoriesQuery>({
+          query: CategoriesDocument,
+          data: {
+            categories: [data?.createCategory, ...categories],
+          },
+        });
+      }
+
+      form.reset();
+    } catch (e) {
+      console.log(e);
     }
   };
 
   return (
     <AdminLayout title="gestion des categories - TGC">
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const form = e.target as HTMLFormElement;
-          const data = new FormData(form);
-          const json = Object.fromEntries(data.entries());
-
-          try {
-            const newCat = (
-              await axios.post("http://localhost:4000/categories", json)
-            ).data;
-            form.reset();
-            setCategories((oldList) => [newCat, ...oldList]);
-          } catch (err) {
-            console.error(err);
-          }
-        }}
-      >
+      <form onSubmit={handleSubmit}>
         <label htmlFor="name">
           Nouvelle Catégorie :{" "}
           <input

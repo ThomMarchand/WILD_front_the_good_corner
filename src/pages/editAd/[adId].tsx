@@ -41,7 +41,6 @@ export default function EditAd() {
     formJSON.price = parseFloat(formJSON.price);
     formJSON.tags = tagsOption?.map((t) => ({ id: t.id }));
 
-    console.log(formJSON);
     updatedAd({
       variables: {
         adId: id,

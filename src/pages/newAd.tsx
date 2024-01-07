@@ -1,49 +1,40 @@
 import Layout from "@/components/Layout";
-import { Category, Tag } from "@/types";
-import { FormEvent, useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/router";
+import { FormEvent, useEffect, useState } from "react";
 import Select from "react-select";
+import { __Tag } from "@/types";
+import { useCreateAdMutation } from "../graphql/generated/schema";
+import { useCategoriesQuery, useTagsQuery } from "@/graphql/generated/schema";
 
 export default function NewAd() {
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    axios
-      .get<Category[]>("http://localhost:4000/categories")
-      .then((res) => setCategories(res.data))
-      .catch(console.error);
-  }, []);
-
-  const [tags, setTags] = useState<Tag[]>([]);
-
-  useEffect(() => {
-    axios
-      .get<Tag[]>("http://localhost:4000/tags")
-      .then((res) => setTags(res.data))
-      .catch(console.error);
-  }, []);
-
-  const tagOptions = tags;
-
   const router = useRouter();
+
+  const { data } = useCategoriesQuery();
+  const categories = data?.categories || [];
+
+  const { data: tagsData } = useTagsQuery();
+  const tags = tagsData?.getTagByName || [];
+  const tagOptions = tags as any;
+  const [selectedTags, setSelectedTags] = useState<__Tag[]>([]);
+
+  const [createAd] = useCreateAdMutation();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const formJSON: any = Object.fromEntries(formData.entries());
+    formJSON.category = parseInt(formJSON.category, 10);
     formJSON.price = parseFloat(formJSON.price);
     formJSON.tags = selectedTags.map((t) => ({ id: t.id }));
 
-    axios
-      .post("http://localhost:4000/ads", formJSON)
-      .then((res) => {
-        router.push(`/ads/${res.data.id}`);
-      })
+    createAd({
+      variables: {
+        data: formJSON,
+      },
+    })
+      .then((res) => router.push(`/ads/${res.data?.createAd.id}`))
       .catch(console.error);
   };
-
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   return (
     <Layout pageTitle="Creation d'une annonce">
