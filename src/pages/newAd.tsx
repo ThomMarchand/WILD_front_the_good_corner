@@ -5,9 +5,12 @@ import Select from "react-select";
 import { __Tag } from "@/types";
 import { useCreateAdMutation } from "../graphql/generated/schema";
 import { useCategoriesQuery, useTagsQuery } from "@/graphql/generated/schema";
+import uploadFile from "@/helpers/uploadFile";
 
 export default function NewAd() {
   const router = useRouter();
+
+  const [imageURL, setImageURL] = useState("");
 
   const { data } = useCategoriesQuery();
   const categories = data?.categories || [];
@@ -15,6 +18,7 @@ export default function NewAd() {
   const { data: tagsData } = useTagsQuery();
   const tags = tagsData?.getTagByName || [];
   const tagOptions = tags as any;
+
   const [selectedTags, setSelectedTags] = useState<__Tag[]>([]);
 
   const [createAd] = useCreateAdMutation();
@@ -23,8 +27,8 @@ export default function NewAd() {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const formJSON: any = Object.fromEntries(formData.entries());
-    formJSON.category = parseInt(formJSON.category, 10);
     formJSON.price = parseFloat(formJSON.price);
+    formJSON.category = parseInt(formJSON.category, 10);
     formJSON.tags = selectedTags.map((t) => ({ id: t.id }));
 
     createAd({
@@ -111,9 +115,19 @@ export default function NewAd() {
               name="picture"
               id="picture"
               required
+              value={imageURL}
+              onChange={(e) => setImageURL(e.target.value)}
               placeholder="https://imageshack.com/zoot.png"
               className="input input-bordered w-full max-w-xs"
             />
+            <input
+              type="file"
+              onChange={(e) => {
+                if (e.target.files?.[0])
+                  uploadFile(e.target.files?.[0]).then(setImageURL);
+              }}
+            />
+            {imageURL && <img src={imageURL} alt="picture" />}
           </div>
         </div>
 
