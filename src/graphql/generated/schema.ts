@@ -45,6 +45,7 @@ export type CategoryInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  CreateUser: User;
   createAd: Ad;
   createCategory: Category;
   createTag: Tag;
@@ -54,6 +55,11 @@ export type Mutation = {
   updateAd: Ad;
   updateCategory: Category;
   updateTag: Tag;
+};
+
+
+export type MutationCreateUserArgs = {
+  data: NewUserIntput;
 };
 
 
@@ -117,6 +123,13 @@ export type NewAdInput = {
 
 export type NewTagCategory = {
   name: Scalars['String']['input'];
+};
+
+export type NewUserIntput = {
+  avatar?: InputMaybe<Scalars['String']['input']>;
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  password: Scalars['String']['input'];
 };
 
 export type ObjectId = {
@@ -188,6 +201,14 @@ export type UpdateAdInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type User = {
+  __typename?: 'User';
+  avatar: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  id: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type AdDetailsQueryVariables = Exact<{
   adId: Scalars['Int']['input'];
 }>;
@@ -256,6 +277,13 @@ export type SearchAdsQueryVariables = Exact<{
 
 
 export type SearchAdsQuery = { __typename?: 'Query', ads: Array<{ __typename?: 'Ad', id: number, title: string, picture: string, price: number }> };
+
+export type MutationMutationVariables = Exact<{
+  data: NewUserIntput;
+}>;
+
+
+export type MutationMutation = { __typename?: 'Mutation', CreateUser: { __typename?: 'User', email: string, name: string, id: number, avatar: string } };
 
 export type TagsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -678,6 +706,42 @@ export type SearchAdsQueryHookResult = ReturnType<typeof useSearchAdsQuery>;
 export type SearchAdsLazyQueryHookResult = ReturnType<typeof useSearchAdsLazyQuery>;
 export type SearchAdsSuspenseQueryHookResult = ReturnType<typeof useSearchAdsSuspenseQuery>;
 export type SearchAdsQueryResult = Apollo.QueryResult<SearchAdsQuery, SearchAdsQueryVariables>;
+export const MutationDocument = gql`
+    mutation Mutation($data: NewUserIntput!) {
+  CreateUser(data: $data) {
+    email
+    name
+    id
+    avatar
+  }
+}
+    `;
+export type MutationMutationFn = Apollo.MutationFunction<MutationMutation, MutationMutationVariables>;
+
+/**
+ * __useMutationMutation__
+ *
+ * To run a mutation, you first call `useMutationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMutationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [mutationMutation, { data, loading, error }] = useMutationMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useMutationMutation(baseOptions?: Apollo.MutationHookOptions<MutationMutation, MutationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MutationMutation, MutationMutationVariables>(MutationDocument, options);
+      }
+export type MutationMutationHookResult = ReturnType<typeof useMutationMutation>;
+export type MutationMutationResult = Apollo.MutationResult<MutationMutation>;
+export type MutationMutationOptions = Apollo.BaseMutationOptions<MutationMutation, MutationMutationVariables>;
 export const TagsDocument = gql`
     query Tags {
   getTagByName {

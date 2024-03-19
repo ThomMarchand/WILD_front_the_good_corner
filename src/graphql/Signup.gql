@@ -1,0 +1,8 @@
+mutation Mutation($data: NewUserIntput!) {
+  CreateUser(data: $data) {
+    email
+    name
+    id
+    avatar
+  }
+}
